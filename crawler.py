@@ -3,7 +3,7 @@ import logging
 from bs4 import BeautifulSoup
 import time
 from collections import deque
-
+from urllib.parse import urlparse
 
 class Crawler:
     def __init__(self, seed_url):
@@ -77,3 +77,8 @@ class Crawler:
                     self.url_to_visit.append(url)
             except Exception as e:
                 logging.exception("Exception occurred")
+
+    def is_html_url(self, response: requests.Response):
+        content_type = response.headers.get("Content-Type")
+        return content_type and "text/html" in content_type
+
