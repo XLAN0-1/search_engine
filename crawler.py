@@ -1,9 +1,10 @@
 import requests
-import logging 
+import logging
 from bs4 import BeautifulSoup
 import time
 from collections import deque
 from urllib.parse import urlparse
+
 
 class Crawler:
     def __init__(self, seed_url):
@@ -14,32 +15,33 @@ class Crawler:
         self.url_to_visit: deque = deque()
         self.domain_limit: dict = {}
 
-
-        # Initialize logging
-        logging.basicConfig(format="%(asctime)s, %(levelname)s, %(funcName)s, %(pathname)s, %(message)s", level=logging.INFO)
+        # Set logging config
+        logging.basicConfig(
+            format="%(asctime)s, %(levelname)s, %(funcName)s, %(pathname)s, %(message)s", level=logging.INFO)
 
     def crawl(self, url):
         self.url_to_visit.append(url)
         while len(self.url_to_visit) > 0:
             current_url = self.url_to_visit.popleft()
-            if current_url not in self.visited_url:
-                try:
-                    url_domain = self.get_domain(current_url)
+            if current_url in self.visited_url:
+                continue
+            try:
+                url_domain = self.get_domain(current_url)
 
-                    if self.can_crawl_domain(url_domain):
-                        time.sleep(self.CRAWL_DELAY)
-                        response = requests.get(current_url)
-                        html_content = response.content
-                        self.visited_url.add(current_url)
-                        soup = BeautifulSoup(html_content, "html.parser")
-                        logging.info("Crawled: %s", current_url)
-                        self.extract_all_hyperlinks_in_page(current_url, soup)
-                    else:
-                        logging.info("Reached domain limit for %s", url_domain)
-                        self.url_to_visit.append(current_url)
+                if self.can_crawl_domain(url_domain):
+                    time.sleep(self.CRAWL_DELAY)
+                    response = requests.get(current_url)
+                    html_content = response.content
+                    self.visited_url.add(current_url)
+                    soup = BeautifulSoup(html_content, "html.parser")
+                    logging.info("Crawled: %s", current_url)
+                    self.extract_all_hyperlinks_in_page(current_url, soup)
+                else:
+                    logging.info("Reached domain limit for %s", url_domain)
+                    self.url_to_visit.append(current_url)
 
-                except Exception as e:
-                    logging.exception("Exception Occured")
+            except Exception as e:
+                logging.exception("Exception Occured")
 
     def get_absolute_url(self, base_url: str, current_url: str):
         if current_url.startswith("https"):
@@ -81,4 +83,3 @@ class Crawler:
     def is_html_url(self, response: requests.Response):
         content_type = response.headers.get("Content-Type")
         return content_type and "text/html" in content_type
-
