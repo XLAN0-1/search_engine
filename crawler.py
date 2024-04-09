@@ -16,7 +16,7 @@ class Crawler:
         self.domain_limit: dict = {}
 
         # Set logging config
-        logging.basicConfig(
+        logging.basicConfig(filename="logs/crawler.log",
             format="%(asctime)s, %(levelname)s, %(funcName)s, %(pathname)s, %(message)s", level=logging.INFO)
 
     def crawl(self, url):
@@ -35,6 +35,9 @@ class Crawler:
                     self.visited_url.add(current_url)
                     soup = BeautifulSoup(html_content, "html.parser")
                     logging.info("Crawled: %s", current_url)
+
+                    # EXTRACT TEXT
+                    self.extract_text(soup)
                     self.extract_all_hyperlinks_in_page(current_url, soup)
                 else:
                     logging.info("Reached domain limit for %s", url_domain)
@@ -83,3 +86,11 @@ class Crawler:
     def is_html_url(self, response: requests.Response):
         content_type = response.headers.get("Content-Type")
         return content_type and "text/html" in content_type
+
+    def extract_text(self, soup: BeautifulSoup):
+        for script in soup(["script", "style"]):
+            script.decompose()
+
+        text = soup.get_text(separator=" ", strip=True)
+        print(text)
+        return text
