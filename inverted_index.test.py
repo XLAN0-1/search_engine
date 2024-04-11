@@ -13,4 +13,6 @@ document2_tokens = "ebay is a site where you can buy items via auctioning".split
 index.add_document(document1, document1_tokens)
 index.add_document(document2, document2_tokens)
 
-index.search("index")
+results = index.search("this is")
+
+print(results)

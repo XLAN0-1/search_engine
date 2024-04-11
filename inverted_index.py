@@ -8,7 +8,7 @@ class InvertedIndex:
         self.no_of_documents = 0
         self.document_term_frequency = {}
         self.document_token_length = {}
-        self.DEFAULT_NULL_VALUE = 0.001
+        self.DAMPING_FACTOR = 0.001
 
         # Set logging config
         logging.basicConfig(
@@ -36,9 +36,8 @@ class InvertedIndex:
                         (1 + no_of_document_that_have_token)) + 1
             return idf
         except Exception as e:
-            print(e)
             logging.debug("Error calculating idf")
-            return self.DEFAULT_NULL_VALUE
+            return self.DAMPING_FACTOR
 
     def calculate_tf(self, token, document):
         try:
@@ -48,10 +47,9 @@ class InvertedIndex:
             return token_frequency / document_token_length
         except Exception as e:
             logging.debug("Token: %s not in Document: %s", token, document)
-            return self.DEFAULT_NULL_VALUE
+            return self.DAMPING_FACTOR
 
     def calculate_tf_idf(self, document, token):
-        print("Document is: ", document)
         tf = self.calculate_tf(token=token, document=document)
         idf = self.calculate_idf(token)
         return tf * idf
@@ -85,7 +83,6 @@ class InvertedIndex:
         results = []
 
         for document in documents_to_search:
-            print(document)
             result = (document, self.get_document_tf_idf_score(
                 document=document, query_tokens=query_tokens))
             results.append(result)
