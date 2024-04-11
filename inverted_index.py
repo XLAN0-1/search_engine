@@ -1,7 +1,6 @@
 from math import log10
 import logging
 
-
 class InvertedIndex:
     def __init__(self):
         self.index = {}
@@ -10,9 +9,10 @@ class InvertedIndex:
         self.document_term_frequency = {}
         self.document_token_length = {}
         self.DEFAULT_NULL_VALUE = 0.001
+
         # Set logging config
         logging.basicConfig(
-            format="%(asctime)s, %(levelname)s, %(funcName)s, %(pathname)s, %(message)s", level=logging.INFO)
+            format="%(asctime)s, %(levelname)s, %(funcName)s, %(pathname)s, %(message)s", level=logging.DEBUG)
 
     def add_document(self, document, tokens):
         self.no_of_documents += 1
@@ -32,10 +32,11 @@ class InvertedIndex:
     def calculate_idf(self, token):
         try:
             no_of_document_that_have_token = len(self.index[token])
-            idf = log10(self.no_of_document /
+            idf = log10(self.no_of_documents /
                         (1 + no_of_document_that_have_token)) + 1
             return idf
         except Exception as e:
+            print(e)
             logging.debug("Error calculating idf")
             return self.DEFAULT_NULL_VALUE
 
@@ -50,14 +51,45 @@ class InvertedIndex:
             return self.DEFAULT_NULL_VALUE
 
     def calculate_tf_idf(self, document, token):
+        print("Document is: ", document)
         tf = self.calculate_tf(token=token, document=document)
         idf = self.calculate_idf(token)
         return tf * idf
+
+    def get_document_tf_idf_score(self, document, query_tokens):
+        tf_idf_scores = []
+        total_idf_score = 1
+        for query in query_tokens:
+            tf_idf = self.calculate_tf_idf(
+               document=document, token=query)
+            tf_idf_scores.append((query, tf_idf))
+            total_idf_score *= tf_idf
+
+        logging.debug("TF - IDF scores for query: %s is %f",
+                      str(query_tokens), total_idf_score)
+
+        return total_idf_score
+    
+    def rank_results(self, results):
+        return sorted(results, key=lambda x: x[1], reverse=True)
 
     def search(self, query):
         query_tokens = query.split()
 
         documents_to_search = set()
 
+
         for query_token in query_tokens:
-            documents_to_search.union(self.index[query_token])
+            documents_to_search = documents_to_search.union(self.index[query_token])
+
+        results = []
+
+        for document in documents_to_search:
+            print(document)
+            result = (document, self.get_document_tf_idf_score(
+                document=document, query_tokens=query_tokens))
+            results.append(result)
+
+        ranked_results = self.rank_results(results=results)
+
+        return ranked_results
